@@ -1,13 +1,21 @@
 ftp:
-  host:127.0.0.1
-  port:21
-  user:root
-  password:root
+  host:
+    127.0.0.1
+  port:
+    21
+  user:
+    root
+  password:
+    root
 
 local:
-  host:10.10.10.10
-  uri:outer/
+  host:
+    10.10.10.10
+  uri:
+    outer/
 
 remote:
-  host:10.10.10.10
-  uri:outer/
+  host:
+    10.10.10.10
+  uri:
+    outer/
