@@ -9,8 +9,8 @@ ftp:
     root
 
 local:
-  dir:
-    10.10.10.10/outer/
+  dir: F:\\cxxzoom\\ftp\\pdf\\
+
 
 remote:
   host:

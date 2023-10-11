@@ -1,0 +1,4 @@
+remote_uri: 192.168.1.15:9999/
+
+remote:
+  get_files: scan_files
