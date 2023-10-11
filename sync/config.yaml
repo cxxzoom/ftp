@@ -9,13 +9,9 @@ ftp:
     root
 
 local:
-  host:
-    10.10.10.10
-  uri:
-    outer/
+  dir:
+    10.10.10.10/outer/
 
 remote:
   host:
-    10.10.10.10
-  uri:
-    outer/
+    10.10.10.10/outer/
