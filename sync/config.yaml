@@ -1,17 +1,8 @@
-ftp:
-  host:
-    127.0.0.1
-  port:
-    21
-  user:
-    root
-  password:
-    root
+# 发送发配置信息
+source_dir: F:\cxxzoom\ftp\test\
+zip_compress_dir: F:\cxxzoom\ftp\public\zip\
+zip_split_dir: F:\cxxzoom\ftp\public\chunk\
 
-local:
-  dir: F:\\cxxzoom\\ftp\\pdf\\
-
-
-remote:
-  host:
-    10.10.10.10/outer/
+# 下面是接收方的配置文件
+chunk_save_dir: F:\cxxzoom\ftp\public2\chunk\
+chunk_unzip_dir: F:\cxxzoom\ftp\public2\
