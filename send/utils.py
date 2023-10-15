@@ -21,6 +21,8 @@ def compress_folder(file_name,conf):
                 zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
     # 分片处理
+    if not os.path.exists(conf['zip_split_dir']):
+        os.mkdir(conf['zip_split_dir'])
     output_prefix = os.path.join(conf['zip_split_dir'], file_name,'')
     split_zip_with_structure(zip_filename, output_prefix, 10)
 

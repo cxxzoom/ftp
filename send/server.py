@@ -22,20 +22,21 @@ def ready():
 
     try:
         # 压缩文件  以及分片处理
-        utils.compress_folder(file_name,conf)
+        utils.compress_folder(file_name, conf)
         return jsonify({'code': 0, 'msg': 'ready success', 'res': {}})
     except Exception as e:
         print(e)
-        return jsonify({'code': -1, 'msg': 'ready fail', 'res': {}})
+        return jsonify({'code': -1, 'msg': f'ready fail:{e}', 'res': {}})
 
 
 # 发送文件：所有文件，包括当前文件和总的文件
-@app.route('/send', methods=['GET'])
+@app.route('/send', methods=['POST'])
 def send():
     args = request.get_json()
     file_name = f"{args['file_name']}"
     current_id = args['last'] + 1
     total = utils.get_chunk_number(file_name)
+    current_id = min(current_id, total)
 
     conf = utils.config()
     file_path = os.path.join(conf['zip_split_dir'], file_name, '')
@@ -55,8 +56,9 @@ def send():
     print(conf)
     url = f'http://{conf["remote"]}/upload'
     print(url)
-    response = requests.post(url=url, data=params, files=files)
+    response = requests.post(url=url, json=params, files=files,headers=headers)
     print(response.text)
+    print("===========================")
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
 
