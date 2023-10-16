@@ -28,13 +28,15 @@ def upload_file():
     try:
         # 获取 JSON 数据
         # 获取文件数据
-        # if 'file' in request.files:
-        req = request.get_json()
-        print(f"req josn{req}")
+        dir_name = request.form['file_name']
         file = request.files['file']
         filename = secure_filename(file.filename)
-        print(filename)
-        save = os.path.join(config['chunk_save_dir'], filename)
+        if not os.path.exists(config['chunk_save_dir']):
+            os.mkdir(config['chunk_save_dir'])
+        chunk_dir = os.path.join(config['chunk_save_dir'], dir_name,'')
+        if not os.path.exists(chunk_dir):
+            os.mkdir(chunk_dir)
+        save = os.path.join(chunk_dir, filename)
         print(f"save path = {save}")
         file.save(save)
         print("Received file:", filename)

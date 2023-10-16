@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 import yaml
@@ -34,7 +35,7 @@ def ready():
 def send():
     args = request.get_json()
     file_name = f"{args['file_name']}"
-    current_id = args['last'] + 1
+    current_id = args['last']
     total = utils.get_chunk_number(file_name)
     current_id = min(current_id, total)
 
@@ -42,12 +43,6 @@ def send():
     file_path = os.path.join(conf['zip_split_dir'], file_name, '')
     file_path = f"{file_path}_{current_id}.zip"
     print(file_path)
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/76.0.3809.100 Safari/537.36',
-
-        'Content-Type': 'application/json'
-    }
     params = {
         'current_id': current_id,
         'total': total
@@ -56,7 +51,7 @@ def send():
     print(conf)
     url = f'http://{conf["remote"]}/upload'
     print(url)
-    response = requests.post(url=url, json=params, files=files,headers=headers)
+    response = requests.post(url=url, data={'file_name': file_name}, files=files)
     print(response.text)
     print("===========================")
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
@@ -70,11 +65,29 @@ def mapping():
     return jsonify({'code': 0, 'msg': '', 'res': maps})
 
 
+@app.route('/chunk_count', methods=['GET'])
+def chunk_count():
+    args = request.get_json()
+    file_name = f"{args['file_name']}"
+    conf = utils.config()
+    files = os.listdir(os.path.join(conf['zip_split_dir'], file_name))
+    return jsonify({'code': 0, 'msg': 'success', 'res': {'count': len(files)}})
+
+
 @app.route('/done', methods=['GET'])
 def done():
-    a = {}
+    args = request.get_json()
+    file_name = f"{args['file_name']}"
+    conf = utils.config()
+    zip_path = os.path.join(conf['zip_compress_dir'], file_name + '.zip')
+    chunk_dir = os.path.join(conf['zip_split_dir'], file_name, '')
     # 这里即完成一个压缩文件的传输
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+    if os.path.exists(chunk_dir):
+        shutil.rmtree(chunk_dir)
 
+    return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9999, debug=True)

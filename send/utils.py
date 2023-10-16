@@ -6,7 +6,7 @@ import requests
 import yaml
 
 
-def compress_folder(file_name,conf):
+def compress_folder(file_name, conf):
     folder_path = os.path.join(conf['source_dir'], file_name)
     save_path = os.path.join(conf['zip_compress_dir'])
     save_name = f'{file_name}.zip'
@@ -23,8 +23,9 @@ def compress_folder(file_name,conf):
     # 分片处理
     if not os.path.exists(conf['zip_split_dir']):
         os.mkdir(conf['zip_split_dir'])
-    output_prefix = os.path.join(conf['zip_split_dir'], file_name,'')
+    output_prefix = os.path.join(conf['zip_split_dir'], file_name, '')
     split_zip_with_structure(zip_filename, output_prefix, 10)
+
 
 def add_dir_split(input_zip, output_prefix):
     file_name, file_extension = os.path.splitext(os.path.basename(input_zip))
@@ -34,7 +35,6 @@ def add_dir_split(input_zip, output_prefix):
 
 
 def split_zip_with_structure(input_zip, output_prefix, chunk_size):
-
     if not os.path.exists(output_prefix):
         os.mkdir(output_prefix)
 
