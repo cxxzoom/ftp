@@ -95,4 +95,4 @@ def test_finish(map):
 def test_clean(map):
     return utils.clean_files(map)
 # 获取当前是否有文件处于传输状态
-main()
+#main()

@@ -89,7 +89,8 @@ def done():
 
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9999, debug=True)
+    app.run(host='0.0.0.0', port=9999, debug=False)
 
 res = utils.get_chunk_number('20231012')

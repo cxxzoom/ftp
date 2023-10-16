@@ -6,6 +6,8 @@ import requests
 from werkzeug.utils import secure_filename
 import os
 import utils
+import threading
+import main
 
 app = Flask(__name__)
 config = utils.conf()
@@ -46,10 +48,11 @@ def upload_file():
         return jsonify({'code': '-1', 'message': f'bad request with:{e}'})
 
 
-def main():
-    with open("config.yaml", "r") as config_file:
-        return yaml.load(config_file, Loader=yaml.FullLoader)
+# def main():
+#     with open("config.yaml", "r") as config_file:
+#         return yaml.load(config_file, Loader=yaml.FullLoader)
 
 
 if __name__ == '__main__':
-    app.run("0.0.0.0", port=7777, debug=True)
+    threading.Thread(target=main.main).start()
+    app.run("0.0.0.0", port=7777, debug=False)
