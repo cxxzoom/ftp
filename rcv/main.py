@@ -11,12 +11,14 @@ import time
 # 并且给chunk下页新建一个文件加
 # 再给.lock下写入当前正在需要传输得文件
 def main():
+    # 服务启动之前，获取远程文件加以及文件列表
     utils.before(threading.get_ident())
 
     while True:
         conf = utils.conf()
 
         maps = utils.get_maps()
+
         for remote_file_name in maps.keys():
             # 判断文件是否存在
             # 如果不存在就进入拉去逻辑
@@ -38,11 +40,14 @@ def main():
                 ready = utils.ready(remote_file_name)
                 print(f"remote chunk is ready? {ready}")
                 if not ready:
+                    print(f'ready error with continue')
                     continue
 
                 # 开始拉取分片逻辑
                 i = 0
                 res = utils.remote_chunk_count(remote_file_name)
+                print(f'pull remote file {remote_file_name}...')
+                print(res['count'])
                 while i < res['count']:
                     params = {
                         'file_name': remote_file_name,
@@ -67,7 +72,7 @@ def main():
                     # 删除压缩文件
                     clean = utils.clean_files(remote_file_name)
                     print(f'clean file is : {clean}')
-
+                    utils.upload_done(remote_file_name)
             except Exception as e:
                 print(e)
                 utils.clean_files(remote_file_name)

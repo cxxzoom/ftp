@@ -1,3 +1,4 @@
+import shutil
 from concurrent import futures
 import os
 import sys
@@ -25,24 +26,31 @@ def compress_folder(file_name, conf):
     if not os.path.exists(conf['zip_split_dir']):
         os.mkdir(conf['zip_split_dir'])
     output_prefix = os.path.join(conf['zip_split_dir'], file_name, '')
-    split_zip_with_structure(zip_filename, output_prefix, 10)
+    split_zip_with_structure(zip_filename, output_prefix, conf['chunk_size'])
 
 
 def split_zip_with_structure(input_zip, output_prefix, chunk_size):
     if not os.path.exists(output_prefix):
         os.mkdir(output_prefix)
+    destination = os.path.join(output_prefix, '', '1.zip')
+    # print(input_zip, destination)
+    shutil.move(input_zip, destination)
 
-    with zipfile.ZipFile(input_zip, 'r') as zip_file:
-        file_list = zip_file.namelist()
-        chunk_num = 1
-        while file_list:
-            chunk_files = file_list[:chunk_size]
-            with zipfile.ZipFile(f'{output_prefix}{chunk_num}.zip', 'w') as chunk_zip:
-                for file in chunk_files:
-                    with zip_file.open(file) as original_file:
-                        chunk_zip.writestr(file, original_file.read())
-            file_list = file_list[chunk_size:]
-            chunk_num += 1
+    # with zipfile.ZipFile(input_zip, 'r') as zip_file:
+    #     file_list = zip_file.namelist()
+    #     tmp_size = min(len(file_list), chunk_size)
+    #     chunk_num = 1
+    #     while file_list:
+    #         chunk_files = file_list[:tmp_size]
+    #         with zipfile.ZipFile(f'{output_prefix}{chunk_num}.zip', 'w') as chunk_zip:
+    #             for file in chunk_files:
+    #                 with zip_file.open(file) as original_file:
+    #                     chunk_zip.writestr(file, original_file.read())
+    #         file_list = file_list[tmp_size:]
+    #         chunk_num += 1
+
+    # 分片完成之后删除源文件
+    # os.remove(input_zip)
 
 
 def scan(path, my_dir: dict, base_path: str, i):

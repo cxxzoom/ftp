@@ -12,6 +12,7 @@ config = utils.conf()
 # 提供给远程的文件上传接口
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    print('i was invoked')
     try:
         # 获取 form 数据
         # 获取文件数据
@@ -35,5 +36,5 @@ def upload_file():
 
 
 if __name__ == '__main__':
-    #threading.Thread(target=main.main).start()
+    threading.Thread(target=main.main).start()
     app.run("0.0.0.0", port=7777, debug=False)

@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import requests
@@ -32,6 +33,7 @@ def ready():
 # 发送文件：所有文件，包括当前文件和总的文件
 @app.route('/send', methods=['POST'])
 def send():
+    print('in send ...')
     # 参数获取
     args = request.get_json()
     file_name = f"{args['file_name']}"
@@ -45,9 +47,9 @@ def send():
     file_path = os.path.join(conf['zip_split_dir'], file_name, '', f"{current_id}.zip")
     files = {'file': open(file_path, 'rb')}
     url = f'http://{conf["remote"]}/upload'
-
+    print('in upload ...')
     response = requests.post(url=url, data={'file_name': file_name}, files=files)
-    print(f'rcv/upload response:{response.text}')
+    print(f'upload response:{response.json()}')
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
 
@@ -90,4 +92,4 @@ def done():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9999, debug=False)
+    app.run(host='0.0.0.0', port=9999, debug=True)

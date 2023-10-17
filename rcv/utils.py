@@ -8,11 +8,11 @@ from datetime import datetime
 
 
 # 合并文件
-def merge_zips_with_structure(map):
-    confs = conf()
-    output_zip = os.path.join(confs['chunk_unzip_dir'], map) + '.zip'
-    input_prefix = os.path.join(confs['chunk_save_dir'], map, '')
-    total_chunks = len(os.listdir(os.path.join(confs['chunk_save_dir'], map)))
+def merge_zips_with_structure(remote_file_name):
+    config = conf()
+    output_zip = os.path.join(config['chunk_unzip_dir'], remote_file_name) + '.zip'
+    input_prefix = os.path.join(config['chunk_save_dir'], remote_file_name, '')
+    total_chunks = len(os.listdir(os.path.join(config['chunk_save_dir'], remote_file_name)))
     with zipfile.ZipFile(output_zip, 'w') as zip_file:
         for i in range(1, total_chunks + 1):
             with zipfile.ZipFile(f'{input_prefix}{i}.zip', 'r') as chunk_zip:
@@ -20,7 +20,7 @@ def merge_zips_with_structure(map):
                     with chunk_zip.open(file_info) as file:
                         zip_file.writestr(file_info.filename, file.read())
 
-    unzip_file(output_zip, os.path.join(confs['chunk_unzip_dir'], map, ''))
+    unzip_file(output_zip, os.path.join(config['chunk_unzip_dir'], remote_file_name, ''))
 
 
 # 解压文件
@@ -66,8 +66,8 @@ def conf():
 
 # 获取远程需要传输的文件列表
 def get_mapping():
-    confs = conf()
-    response = requests.get(f'http://{confs["remote"]}/maps')
+    config = conf()
+    response = requests.get(f'http://{config["remote"]}/maps')
     code, msg, res = response.json()['code'], response.json()['msg'], response.json()['res']
     if code == 0:
         # print(res)
@@ -83,25 +83,28 @@ def get_maps():
         try:
             get_mapping()
         except Exception as e:
-            print(f'get remote maps with err:{e}')
+            print(f'get remote file with err:{e}')
             return {}
     with open('maps.json', 'r') as file:
-        maps = json.load(file)
-        return maps if maps else {}
+        remote_file_names = json.load(file)
+        return remote_file_names if remote_file_names else {}
 
 
 # 从远程拉去chunk文件
 def pull_file(params: dict) -> bool:
-    confs = conf()
+    print('pulling file...')
+    config = conf()
     header = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/76.0.3809.100 Safari/537.36',
 
         'Content-Type': 'application/json'
     }
-    response = requests.post(f'http://{confs["remote"]}/send', json=params, headers=header)
+    response = requests.post(f'http://{config["remote"]}/send',
+                             json=params,
+                             headers=header)
     res = response.text
-
+    print('maybe done...')
     print(res)
     # if res['code'] != 0:
     #     return False
@@ -110,8 +113,8 @@ def pull_file(params: dict) -> bool:
 
 # 判断是否全部传输完成。如果没全部传输完成，则重新
 def chunks_finish(file_name):
-    confs = conf()
-    files = scan2(os.path.join(confs['chunk_unzip_dir'], file_name, ''))
+    config = conf()
+    files = scan2(os.path.join(config['chunk_unzip_dir'], file_name, ''))
 
     with open('maps.json', 'r') as file:
         res = json.load(file)
@@ -122,7 +125,7 @@ def chunks_finish(file_name):
 
 # TODO
 def get_chunk_number(file_name: str) -> int:
-    confs = conf()
+    config = conf()
     files = os.listdir(os.path.join(conf['zip_split_dir'], file_name))
     with open('maps.json', 'r') as file:
         res = json.load(file)
@@ -131,8 +134,9 @@ def get_chunk_number(file_name: str) -> int:
 
 
 def ready(file_name: str) -> bool:
-    confs = conf()
-    response = requests.get(f'http://{confs["remote"]}/ready',json={'file_name': file_name})
+    config = conf()
+    response = requests.get(f'http://{config["remote"]}/ready',
+                            json={'file_name': file_name})
     print(f'rcv->ready->{response.text}')
     if response.status_code == 200:
         return True
@@ -141,9 +145,10 @@ def ready(file_name: str) -> bool:
 
 # 获取远程当前文件的分片数量
 def remote_chunk_count(file_name: str) -> dict:
-    confs = conf()
+    config = conf()
     params = {'file_name': file_name}
-    response = requests.get(f'http://{confs["remote"]}/chunk_count', json=params)
+    response = requests.get(f'http://{config["remote"]}/chunk_count',
+                            json=params)
     res = response.json()
     return res['res']
 
@@ -165,15 +170,15 @@ def scan2(path):
 
 
 def clean_files(file_name: str):
-    confs = conf()
+    config = conf()
     # 删除chunk文件
     # 删除zip文件
     try:
         # 递归删除chunk文件
         # 删除压缩包
         # 删除.lock真正在执行的任务
-        chunk_dir = os.path.join(confs['chunk_save_dir'], file_name, '')
-        zip_file = os.path.join(confs['chunk_unzip_dir'], file_name) + '.zip'
+        chunk_dir = os.path.join(config['chunk_save_dir'], file_name, '')
+        zip_file = os.path.join(config['chunk_unzip_dir'], file_name) + '.zip'
 
         if os.path.exists(chunk_dir):
             shutil.rmtree(chunk_dir)
@@ -191,23 +196,25 @@ def clean_files(file_name: str):
 
 # 开始之前创建必要的文件夹以免不必要的错误
 def before(t_id: int):
-    confs = conf()
-    if not os.path.exists(confs['chunk_save_dir']):
-        os.mkdir(confs['chunk_save_dir'])
+    config = conf()
+    if not os.path.exists(config['chunk_save_dir']):
+        os.mkdir(config['chunk_save_dir'])
 
-    if not os.path.exists(confs['chunk_unzip_dir']):
-        os.mkdir(confs['chunk_unzip_dir'])
+    if not os.path.exists(config['chunk_unzip_dir']):
+        os.mkdir(config['chunk_unzip_dir'])
     if not os.path.exists('.lock'):
         with open('.lock', 'w') as file:
             file.write('')
     # 记录线程的id
-    with open(os.path.join(confs['log_save_dir'], 'thread_id.json'), 'a') as t:
-        json.dump({'tread_id': t_id, 'time': datetime.now().strftime("%Y%m")}, t)
+    if not os.path.exists('thread_id.txt'):
+        with open('thread_id.txt', 'w') as t:
+            json.dump({'tread_id': t_id, 'time': datetime.now().strftime("%Y%m")}, t)
 
 
 def log(params: dict):
-    confs = conf()
-    log_dir = os.path.join(confs['log_save_dir'])
+    config = conf()
+    log_dir = os.path.join(config['log_save_dir'])
+
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
 
@@ -215,5 +222,13 @@ def log(params: dict):
     if not os.path.exists(month_log):
         os.mkdir(month_log)
 
-    with open(os.path.join(month_log, datetime.now().strftime("%d")), 'a') as file:
-        json.dump(params, file)
+    # with open(os.path.join(month_log, datetime.now().strftime("%d")), 'a') as file:
+    #     json.dump(params, file)
+
+
+# 文件上传完成之后需要删除源文件
+def upload_done(file_name):
+    url = f"http://{conf()['remote']}/done"
+    params = {'file_name': file_name}
+    requests.get(url=url, data=params)
+    return
