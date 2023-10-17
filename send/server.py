@@ -1,11 +1,7 @@
 import os
 import shutil
-import sys
-
-import yaml
-import json
-from flask import Flask, jsonify, request
 import requests
+from flask import Flask, jsonify, request
 import utils
 
 app = Flask(__name__)
@@ -16,13 +12,16 @@ def ready():
     # 这里就要开始进行文件的压缩，分片,l
     args = request.get_json()
     file_name = args['file_name']
+
     conf = utils.config()
     source_dir = os.path.join(conf['source_dir'], file_name)
+    print(source_dir)
     if not os.path.exists(source_dir):
         return jsonify({'code': -1, 'msg': f'{file_name} 不存在', 'res': {}})
 
     try:
         # 压缩文件  以及分片处理
+        # 这里可以起个线程去处理，然后直接返回，然后提供一个确认是否完成的接口，完成了就返回true
         utils.compress_folder(file_name, conf)
         return jsonify({'code': 0, 'msg': 'ready success', 'res': {}})
     except Exception as e:
@@ -33,27 +32,22 @@ def ready():
 # 发送文件：所有文件，包括当前文件和总的文件
 @app.route('/send', methods=['POST'])
 def send():
+    # 参数获取
     args = request.get_json()
     file_name = f"{args['file_name']}"
     current_id = args['last']
+    # 通过文件名获取分片数量
     total = utils.get_chunk_number(file_name)
+    # 安全控制
     current_id = min(current_id, total)
 
     conf = utils.config()
-    file_path = os.path.join(conf['zip_split_dir'], file_name, '')
-    file_path = f"{file_path}_{current_id}.zip"
-    print(file_path)
-    params = {
-        'current_id': current_id,
-        'total': total
-    }
+    file_path = os.path.join(conf['zip_split_dir'], file_name, '', f"{current_id}.zip")
     files = {'file': open(file_path, 'rb')}
-    print(conf)
     url = f'http://{conf["remote"]}/upload'
-    print(url)
+
     response = requests.post(url=url, data={'file_name': file_name}, files=files)
-    print(response.text)
-    print("===========================")
+    print(f'rcv/upload response:{response.text}')
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
 
@@ -62,7 +56,7 @@ def mapping():
     conf = utils.config()
     source_dir = os.path.join(conf["source_dir"])
     maps = utils.scan2(source_dir)
-    return jsonify({'code': 0, 'msg': '', 'res': maps})
+    return jsonify({'code': 0, 'msg': 'success', 'res': maps})
 
 
 @app.route('/chunk_count', methods=['GET'])
@@ -70,8 +64,13 @@ def chunk_count():
     args = request.get_json()
     file_name = f"{args['file_name']}"
     conf = utils.config()
-    files = os.listdir(os.path.join(conf['zip_split_dir'], file_name))
-    return jsonify({'code': 0, 'msg': 'success', 'res': {'count': len(files)}})
+
+    chunk_dir = os.path.join(conf['zip_split_dir'], file_name, '')
+    if os.path.exists(chunk_dir):
+        files = os.listdir(chunk_dir)
+        return jsonify({'code': 0, 'msg': 'success', 'res': {'count': len(files)}})
+
+    return jsonify({'code': -1, 'msg': 'file not exist', 'res': {'count': 0}})
 
 
 @app.route('/done', methods=['GET'])
@@ -92,5 +91,3 @@ def done():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9999, debug=False)
-
-res = utils.get_chunk_number('20231012')

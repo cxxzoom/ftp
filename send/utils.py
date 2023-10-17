@@ -1,7 +1,9 @@
+from concurrent import futures
 import os
 import sys
+import threading
 import zipfile
-import requests
+from datetime import datetime
 
 import yaml
 
@@ -9,8 +11,7 @@ import yaml
 def compress_folder(file_name, conf):
     folder_path = os.path.join(conf['source_dir'], file_name)
     save_path = os.path.join(conf['zip_compress_dir'])
-    save_name = f'{file_name}.zip'
-    zip_filename = os.path.join(save_path, save_name)
+    zip_filename = os.path.join(save_path, f'{file_name}.zip')
 
     if not os.path.exists(save_path):
         os.mkdir(save_path)
@@ -27,13 +28,6 @@ def compress_folder(file_name, conf):
     split_zip_with_structure(zip_filename, output_prefix, 10)
 
 
-def add_dir_split(input_zip, output_prefix):
-    file_name, file_extension = os.path.splitext(os.path.basename(input_zip))
-    output_prefix = os.path.join(output_prefix, file_name)
-    output_prefix = os.path.join(output_prefix, '')
-    return output_prefix
-
-
 def split_zip_with_structure(input_zip, output_prefix, chunk_size):
     if not os.path.exists(output_prefix):
         os.mkdir(output_prefix)
@@ -43,7 +37,7 @@ def split_zip_with_structure(input_zip, output_prefix, chunk_size):
         chunk_num = 1
         while file_list:
             chunk_files = file_list[:chunk_size]
-            with zipfile.ZipFile(f'{output_prefix}_{chunk_num}.zip', 'w') as chunk_zip:
+            with zipfile.ZipFile(f'{output_prefix}{chunk_num}.zip', 'w') as chunk_zip:
                 for file in chunk_files:
                     with zip_file.open(file) as original_file:
                         chunk_zip.writestr(file, original_file.read())
@@ -100,3 +94,37 @@ def dd(var):
 # 需要解决的一个大的难题是，如果一个子文件夹里面的某个文件非常应该怎么处理呢？
 
 # 嗯我的想法是将这个大文件进行分片，但是不和其他文件合在一起。
+
+#
+# def pure_compress(file_name, conf):
+#     print("开始时间:" + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+#     folder_path = os.path.join(conf['source_dir'], file_name)
+#     save_path = os.path.join(conf['zip_compress_dir'])
+#     zip_filename = os.path.join(save_path, f'{file_name}.zip')
+#
+#     if not os.path.exists(save_path):
+#         os.mkdir(save_path)
+#     # with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+#     #     for root, dirs, files in os.walk(folder_path):
+#     #         print(f"folder_path：{folder_path}")
+#     #         for file in files:
+#     #             file_path = os.path.join(root, file)
+#     #             zipf.write(file_path, os.path.relpath(file_path, folder_path))
+#     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+#         for root, dirs, files in os.walk(folder_path):
+#             print(f"folder_path：{folder_path}")
+#             for file in files:
+#                 file_path = os.path.join(root, file)
+#                 #threading.Thread(target=pure_compress2(zipf, zip_filename, folder_path, file_path)).start()
+#                 with futures.ThreadPoolExecutor(max_workers=5) as executor:
+#                     executor.submit(pure_compress2,zipf, zip_filename, folder_path, file_path)
+#     # shutil.make_archive(zip_filename, 'zip', folder_path)
+#     print("结束时间:" + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+#
+#
+# def pure_compress2(zipf, zip_filename, source_dir, file_path):
+#     # with zipfile.ZipFile(zip_filename, 'a', zipfile.ZIP_DEFLATED) as zipf:
+#     zipf.write(file_path, os.path.relpath(file_path, source_dir))
+#
+#
+# pure_compress('20231012', config(), )

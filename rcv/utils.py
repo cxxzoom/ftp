@@ -4,7 +4,6 @@ import zipfile
 import os
 import requests
 import yaml
-from flask import logging
 from datetime import datetime
 
 
@@ -80,6 +79,12 @@ def get_mapping():
 # 或者直接每次传输的时候直接去拉去不就得了？
 # 获取需要传输的文件列表--本地
 def get_maps():
+    if not os.path.exists('maps.json'):
+        try:
+            get_mapping()
+        except Exception as e:
+            print(f'get remote maps with err:{e}')
+            return {}
     with open('maps.json', 'r') as file:
         maps = json.load(file)
         return maps if maps else {}
@@ -106,7 +111,7 @@ def pull_file(params: dict) -> bool:
 # 判断是否全部传输完成。如果没全部传输完成，则重新
 def chunks_finish(file_name):
     confs = conf()
-    files = scan2(os.path.join(confs['chunk_unzip_dir'], file_name))
+    files = scan2(os.path.join(confs['chunk_unzip_dir'], file_name, ''))
 
     with open('maps.json', 'r') as file:
         res = json.load(file)
@@ -127,7 +132,7 @@ def get_chunk_number(file_name: str) -> int:
 
 def ready(file_name: str) -> bool:
     confs = conf()
-    response = requests.get(f'http://{confs["remote"]}/ready')
+    response = requests.get(f'http://{confs["remote"]}/ready',json={'file_name': file_name})
     print(f'rcv->ready->{response.text}')
     if response.status_code == 200:
         return True
@@ -147,14 +152,15 @@ def remote_chunk_count(file_name: str) -> dict:
 #
 def scan2(path):
     my_dir = {}
-    files = os.listdir(path)
     my_dir['count'] = 0
-    for file in files:
-        # 如果是文件的话，不需要扫描，但是要加1
-        if os.path.isfile(os.path.join(path, file)):
-            my_dir['count'] += 1
-        for root, dirs, files in os.walk(os.path.join(path, file)):
-            my_dir['count'] += len(files)
+    if os.path.exists(path):
+        files = os.listdir(path)
+        for file in files:
+            # 如果是文件的话，不需要扫描，但是要加1
+            if os.path.isfile(os.path.join(path, file)):
+                my_dir['count'] += 1
+            for root, dirs, files in os.walk(os.path.join(path, file)):
+                my_dir['count'] += len(files)
     return my_dir
 
 
@@ -184,22 +190,30 @@ def clean_files(file_name: str):
 
 
 # 开始之前创建必要的文件夹以免不必要的错误
-def before():
+def before(t_id: int):
     confs = conf()
     if not os.path.exists(confs['chunk_save_dir']):
         os.mkdir(confs['chunk_save_dir'])
 
     if not os.path.exists(confs['chunk_unzip_dir']):
         os.mkdir(confs['chunk_unzip_dir'])
+    if not os.path.exists('.lock'):
+        with open('.lock', 'w') as file:
+            file.write('')
+    # 记录线程的id
+    with open(os.path.join(confs['log_save_dir'], 'thread_id.json'), 'a') as t:
+        json.dump({'tread_id': t_id, 'time': datetime.now().strftime("%Y%m")}, t)
 
 
-def log():
+def log(params: dict):
     confs = conf()
     log_dir = os.path.join(confs['log_save_dir'])
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
 
-    now = datetime.now()
-    log_mon = os.path.join(log_dir, now.strftime("%Y%m"), '')
-    if not os.path.exists(log_mon):
-        os.mkdir(log_mon)
+    month_log = os.path.join(log_dir, datetime.now().strftime("%Y%m"), '')
+    if not os.path.exists(month_log):
+        os.mkdir(month_log)
+
+    with open(os.path.join(month_log, datetime.now().strftime("%d")), 'a') as file:
+        json.dump(params, file)

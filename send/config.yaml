@@ -1,4 +1,4 @@
 source_dir: F:\cxxzoom\ftp\test_pdf\
-zip_compress_dir: L:\cxxzoom\ftp\public\zip\
+zip_compress_dir: F:\cxxzoom\ftp\public\zip\
 zip_split_dir: F:\cxxzoom\ftp\public\chunk\
 remote: 192.168.1.15:7777
