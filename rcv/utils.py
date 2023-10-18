@@ -74,6 +74,8 @@ def get_mapping():
         with open('maps.json', 'w') as file:
             json.dump(res, file)
 
+    return res
+
 
 # 考虑这里是不是需要
 # 或者直接每次传输的时候直接去拉去不就得了？
@@ -100,7 +102,7 @@ def pull_file(params: dict) -> bool:
 
         'Content-Type': 'application/json'
     }
-    response = requests.post(f'http://{config["remote"]}/send',
+    response = requests.post(f'http://{config["remote"]}/send2',
                              json=params,
                              headers=header)
     res = response.text

@@ -1,6 +1,11 @@
 */.idea
 .idea
-pdf/*
+pdf/
 *.pdf
 test_pdf/*
 *.zip
+*/venv
+public/
+public2/
+log/
+*/__pycache__

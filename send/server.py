@@ -53,6 +53,18 @@ def send():
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
 
+# 现在使用多线程传
+@app.route('/send2', methods=['POST'])
+def send2():
+    print('in send2 ...')
+    # 参数获取
+    args = request.get_json()
+    file_name = f"{args['file_name']}"
+    # 从这里开始就是扫描文件了
+    utils.thread_upload(file_name)
+    return jsonify({'code': 0, 'msg': 'tread uploading', 'res': {}})
+
+
 @app.route('/maps', methods=['GET'])
 def mapping():
     conf = utils.config()
@@ -92,4 +104,4 @@ def done():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9999, debug=True)
+    app.run(host='0.0.0.0', port=9999, debug=False)

@@ -1,3 +1,4 @@
+import concurrent
 import shutil
 from concurrent import futures
 import os
@@ -6,7 +7,9 @@ import threading
 import zipfile
 from datetime import datetime
 
+import requests
 import yaml
+from flask import jsonify
 
 
 def compress_folder(file_name, conf):
@@ -34,23 +37,24 @@ def split_zip_with_structure(input_zip, output_prefix, chunk_size):
         os.mkdir(output_prefix)
     destination = os.path.join(output_prefix, '', '1.zip')
     # print(input_zip, destination)
-    shutil.move(input_zip, destination)
+    # 这里就是不分片，直接cv过去
+    # shutil.move(input_zip, destination)
 
-    # with zipfile.ZipFile(input_zip, 'r') as zip_file:
-    #     file_list = zip_file.namelist()
-    #     tmp_size = min(len(file_list), chunk_size)
-    #     chunk_num = 1
-    #     while file_list:
-    #         chunk_files = file_list[:tmp_size]
-    #         with zipfile.ZipFile(f'{output_prefix}{chunk_num}.zip', 'w') as chunk_zip:
-    #             for file in chunk_files:
-    #                 with zip_file.open(file) as original_file:
-    #                     chunk_zip.writestr(file, original_file.read())
-    #         file_list = file_list[tmp_size:]
-    #         chunk_num += 1
+    with zipfile.ZipFile(input_zip, 'r') as zip_file:
+        file_list = zip_file.namelist()
+        tmp_size = min(len(file_list), chunk_size)
+        chunk_num = 1
+        while file_list:
+            chunk_files = file_list[:tmp_size]
+            with zipfile.ZipFile(f'{output_prefix}{chunk_num}.zip', 'w') as chunk_zip:
+                for file in chunk_files:
+                    with zip_file.open(file) as original_file:
+                        chunk_zip.writestr(file, original_file.read())
+            file_list = file_list[tmp_size:]
+            chunk_num += 1
 
     # 分片完成之后删除源文件
-    # os.remove(input_zip)
+    os.remove(input_zip)
 
 
 def scan(path, my_dir: dict, base_path: str, i):
@@ -95,44 +99,31 @@ def dd(var):
     print(var)
     sys.exit()
 
-# 先做再优化把
 
-# 更优雅的分片解决方案: 是文件夹则不分片，不是文件夹的时候才进行分片
+def upload2(file_path, file_name, remote):
+    files = {'file': open(file_path, 'rb')}
+    url = f'http://{remote}/upload'
+    print('in upload ...')
+    response = requests.post(url=url, data={'file_name': file_name}, files=files)
+    print(response.json(), flush=True)
 
-# 需要解决的一个大的难题是，如果一个子文件夹里面的某个文件非常应该怎么处理呢？
 
-# 嗯我的想法是将这个大文件进行分片，但是不和其他文件合在一起。
+# 这里写个线程池来管理上传
+def thread_upload(file_name):
+    conf = config()
+    chunk_path = os.path.join(conf['zip_split_dir'], file_name, '')
+    print(f'chunk_path:{chunk_path}')
+    remote = conf['remote']
+    # 遍历这下面的文件总数
+    chunks = os.listdir(chunk_path)
+    tmp_list = []
+    for value in chunks:
+        tmp_list.append(os.path.join(chunk_path, value))
 
-#
-# def pure_compress(file_name, conf):
-#     print("开始时间:" + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-#     folder_path = os.path.join(conf['source_dir'], file_name)
-#     save_path = os.path.join(conf['zip_compress_dir'])
-#     zip_filename = os.path.join(save_path, f'{file_name}.zip')
-#
-#     if not os.path.exists(save_path):
-#         os.mkdir(save_path)
-#     # with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-#     #     for root, dirs, files in os.walk(folder_path):
-#     #         print(f"folder_path：{folder_path}")
-#     #         for file in files:
-#     #             file_path = os.path.join(root, file)
-#     #             zipf.write(file_path, os.path.relpath(file_path, folder_path))
-#     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-#         for root, dirs, files in os.walk(folder_path):
-#             print(f"folder_path：{folder_path}")
-#             for file in files:
-#                 file_path = os.path.join(root, file)
-#                 #threading.Thread(target=pure_compress2(zipf, zip_filename, folder_path, file_path)).start()
-#                 with futures.ThreadPoolExecutor(max_workers=5) as executor:
-#                     executor.submit(pure_compress2,zipf, zip_filename, folder_path, file_path)
-#     # shutil.make_archive(zip_filename, 'zip', folder_path)
-#     print("结束时间:" + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-#
-#
-# def pure_compress2(zipf, zip_filename, source_dir, file_path):
-#     # with zipfile.ZipFile(zip_filename, 'a', zipfile.ZIP_DEFLATED) as zipf:
-#     zipf.write(file_path, os.path.relpath(file_path, source_dir))
-#
-#
-# pure_compress('20231012', config(), )
+    # for file in tmp_list:
+    #     threading.Thread(target=upload2, args=(file, file_name, remote)).start()
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(upload2, tmp_list,[file_name] * len(tmp_list), [remote] * len(tmp_list))
+        for result in results:
+            print(result)

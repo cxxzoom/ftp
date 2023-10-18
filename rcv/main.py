@@ -17,13 +17,21 @@ def main():
     while True:
         conf = utils.conf()
 
-        maps = utils.get_maps()
+        maps = utils.get_mapping()
 
         for remote_file_name in maps.keys():
             # 判断文件是否存在
             # 如果不存在就进入拉去逻辑
             if os.path.exists(os.path.join(conf['chunk_unzip_dir'], remote_file_name)):
-                continue
+                finish = utils.chunks_finish(remote_file_name)
+                if not finish:
+                    # 删除.lock 文件，
+                    utils.clean_files(remote_file_name)
+                    unzip_path = os.path.join(conf['chunk_unzip_dir'], '', remote_file_name)
+                    if os.path.exists(unzip_path):
+                        shutil.rmtree(unzip_path)
+                else:
+                    continue
 
             # 分片文件上传地址
             if not os.path.exists(os.path.join(conf['chunk_save_dir'], remote_file_name, '')):
@@ -48,23 +56,35 @@ def main():
                 res = utils.remote_chunk_count(remote_file_name)
                 print(f'pull remote file {remote_file_name}...')
                 print(res['count'])
-                while i < res['count']:
-                    params = {
-                        'file_name': remote_file_name,
-                        'last': i + 1
-                    }
-                    if utils.pull_file(params):
-                        i = i + 1
+                # while i < res['count']:
+                #     params = {
+                #         'file_name': remote_file_name,
+                #         'last': i + 1
+                #     }
+                #     if utils.pull_file(params):
+                #         i = i + 1
+                # 好小子，这里直接用多线程传输，所以调用一次就够了，但是要等他传输完成
+                params = {
+                    'file_name': remote_file_name,
+                    'last': i + 1
+                }
+                utils.pull_file(params)
 
-                # 判断是否传输完整
-                if len(os.listdir(os.path.join(conf['chunk_save_dir'], remote_file_name))) == res['count']:
-                    # 开始解压
-                    utils.merge_zips_with_structure(remote_file_name)
+                while True:
+                    print('im waiting...')
+                    # 判断是否传输完整
+                    if len(os.listdir(os.path.join(conf['chunk_save_dir'], remote_file_name))) == res['count']:
+                        print('rcv chunks is ok! And unzipping...')
+                        utils.merge_zips_with_structure(remote_file_name)
+                        break
 
                 is_finish = utils.chunks_finish(remote_file_name)
                 # if not is_finish:
                 #     # 删除.lock 文件，
                 #     utils.clean_files(remote_file_name)
+                #     unzip_path = os.path.join(conf['chunk_unzip_dir'], '', remote_file_name)
+                #     if os.path.exists(unzip_path):
+                #         shutil.rmtree(unzip_path)
 
                 print(f'upload is finish')
                 if is_finish:
@@ -73,6 +93,10 @@ def main():
                     clean = utils.clean_files(remote_file_name)
                     print(f'clean file is : {clean}')
                     utils.upload_done(remote_file_name)
+
+                    time.sleep(conf['sleep'])
+
+
             except Exception as e:
                 print(e)
                 utils.clean_files(remote_file_name)

@@ -1,7 +1,13 @@
+import concurrent
 import os
 import sys
+import threading
+
+import requests
 from flask import jsonify
 import zipfile
+
+import utils
 
 
 def scan(path, my_dir, basepath, i):
@@ -124,9 +130,28 @@ def scan2(path, my_dir, top_name, i):
     files = os.listdir(path)
     for file in files:
         my_dir[file] = 0
-        for root, dirs, files in os.walk(os.path.join(path,file)):
+        for root, dirs, files in os.walk(os.path.join(path, file)):
             my_dir[file] += len(files)
 
-a = {}
-scan2('F:\\cxxzoom\\ftp\\test_pdf',a,'',0)
-print(a)
+
+def upload2(file_path, remote):
+    files = {'file': open(file_path, 'rb')}
+    url = f'http://{remote}/upload'
+    print('in upload ...')
+    response = requests.post(url=url, data={'file_name': file_name}, files=files)
+    print(response.json(), flush=True)
+
+
+# 这里写个线程池来管理上传
+def a(chunk_path):
+    remote = utils.config()['remote']
+    # 遍历这下面的文件总数
+    chunks = os.listdir(chunk_path)
+    tmp_list = []
+    for value in chunks:
+        tmp_list.append(os.path.join(chunk_path, value))
+
+    for file in tmp_list:
+        threading.Thread(target=upload2, args=(file, remote)).start()
+
+# a(os.path.join(utils.config()['zip_split_dir'], '20231012', ''))
