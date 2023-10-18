@@ -1,4 +1,0 @@
-# 发送发配置信息
-source_dir: F:\cxxzoom\ftp\test\
-zip_compress_dir: F:\cxxzoom\ftp\public\zip\
-zip_split_dir: F:\cxxzoom\ftp\public\chunk\
