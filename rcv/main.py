@@ -20,6 +20,8 @@ def main():
         maps = utils.get_mapping()
 
         for remote_file_name in maps.keys():
+
+            time.sleep(conf['sleep'])
             # 判断文件是否存在
             # 如果不存在就进入拉去逻辑
             if os.path.exists(os.path.join(conf['chunk_unzip_dir'], remote_file_name)):
@@ -93,8 +95,6 @@ def main():
                     clean = utils.clean_files(remote_file_name)
                     print(f'clean file is : {clean}')
                     utils.upload_done(remote_file_name)
-
-                    time.sleep(conf['sleep'])
 
 
             except Exception as e:
