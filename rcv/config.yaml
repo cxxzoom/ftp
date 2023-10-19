@@ -1,5 +1,5 @@
 chunk_save_dir: F:\cxxzoom\ftp\public2\chunk\
 chunk_unzip_dir: F:\cxxzoom\ftp\public2\
-remote: 192.168.1.15:9999
+remote: 192.168.1.71:9999
 log_save_dir: F:\cxxzoom\ftp\log\
 sleep: 20
