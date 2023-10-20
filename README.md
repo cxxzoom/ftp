@@ -23,3 +23,14 @@ https://blog.minkse.cn/centos-7-9-%e5%8d%87%e7%ba%a7make4-4%e7%89%88%e6%9c%ac/  
 
 安装centos : https://blog.csdn.net/qq_50377269/article/details/130971305
 
+步骤：
+```
+安装好centos
+下载好python3.8.18的源代码
+编译安装
+检查gcc和make
+创建 venv
+安装扩展
+修改yaml
+测试
+```
