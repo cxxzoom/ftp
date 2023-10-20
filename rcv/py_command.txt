@@ -1,5 +1,0 @@
-离线命令下载：pip download -d package -r ../requirements.txt --only-binary=:all: --platform linux_x86_64 -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-
-
-离线安装： pip install --no-index --find-links=/packages/ -r requirements.txt

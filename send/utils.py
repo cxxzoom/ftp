@@ -1,15 +1,11 @@
 import concurrent
-import shutil
-from concurrent import futures
 import os
 import sys
-import threading
 import zipfile
-from datetime import datetime
+from concurrent import futures
 
 import requests
 import yaml
-from flask import jsonify
 
 
 def compress_folder(file_name, conf):
