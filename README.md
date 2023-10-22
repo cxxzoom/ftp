@@ -34,3 +34,7 @@ https://blog.minkse.cn/centos-7-9-%e5%8d%87%e7%ba%a7make4-4%e7%89%88%e6%9c%ac/  
 修改yaml
 测试
 ```
+### 卸载了新版本，下载了一个老版本，但是pip install/download错误
+因为pip的版本不对。临时解决方案：
+在虚拟环境里 重新安装pip(只适合与外网环境)
+python \path\to\get-pip.py
