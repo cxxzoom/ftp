@@ -15,7 +15,7 @@ pyyaml
 ````shell
 pip download pyyaml -d package --only-binary=:all: --platform linux_x86_64  -i https://mirrors.aliyun.com/pypi/simple/
 ````
-
+pip download pyyaml -d package --only-binary=:all: --platform linux_x86_64  -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 
 
