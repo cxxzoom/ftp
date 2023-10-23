@@ -1,5 +1,4 @@
 import os.path
-import shutil
 import threading
 import utils
 import time
@@ -15,6 +14,10 @@ def main():
     utils.before(threading.get_ident())
 
     while True:
+
+        if not utils.can_use():
+            time.sleep(60 * 60)
+
         conf = utils.conf()
 
         maps = utils.get_mapping()
@@ -29,9 +32,9 @@ def main():
                 if not finish:
                     # 删除.lock 文件，
                     utils.clean_files(remote_file_name)
-                    unzip_path = os.path.join(conf['chunk_unzip_dir'], '', remote_file_name)
-                    if os.path.exists(unzip_path):
-                        shutil.rmtree(unzip_path)
+                    # unzip_path = os.path.join(conf['chunk_unzip_dir'], '', remote_file_name)
+                    # if os.path.exists(unzip_path):
+                    #     shutil.rmtree(unzip_path)
                 else:
                     continue
 
@@ -42,30 +45,22 @@ def main():
             # 开始拉去逻辑
             # 创建正在传输的文件
             try:
-                print(f'begin pull file{remote_file_name}')
+                print(f'{utils.now2()} : 准备拉取文件 : {remote_file_name}')
 
                 utils.create_lock(remote_file_name)
 
                 # 让远程准备好文件
                 ready = utils.ready(remote_file_name)
-                print(f"remote chunk is ready? {ready}")
+                print(f"{utils.now2()} : 远程文件准备完成? {ready}")
                 if not ready:
-                    print(f'ready error with continue')
+                    print(f'{utils.now2()} : 远程文件准备失败并跳过')
                     continue
 
                 # 开始拉取分片逻辑
                 i = 0
                 res = utils.remote_chunk_count(remote_file_name)
-                print(f'pull remote file {remote_file_name}...')
-                print(res['count'])
-                # while i < res['count']:
-                #     params = {
-                #         'file_name': remote_file_name,
-                #         'last': i + 1
-                #     }
-                #     if utils.pull_file(params):
-                #         i = i + 1
-                # 好小子，这里直接用多线程传输，所以调用一次就够了，但是要等他传输完成
+                print(f'{utils.now2()} : 文件： {remote_file_name} ，共有{res["count"]}个切片文件...')
+
                 params = {
                     'file_name': remote_file_name,
                     'last': i + 1
@@ -73,10 +68,10 @@ def main():
                 utils.pull_file(params)
 
                 while True:
-                    print('im waiting...')
+                    print(f'{utils.now2()} : 正在等待文件:{remote_file_name} 分片传输完成...')
                     # 判断是否传输完整
                     if len(os.listdir(os.path.join(conf['chunk_save_dir'], remote_file_name))) == res['count']:
-                        print('rcv chunks is ok! And unzipping...')
+                        print(f'{utils.now2()} : 文件:{remote_file_name} 分片传输完成并开始解压...')
                         utils.merge_zips_with_structure(remote_file_name)
                         break
 
@@ -88,13 +83,12 @@ def main():
                 #     if os.path.exists(unzip_path):
                 #         shutil.rmtree(unzip_path)
 
-                print(f'upload is finish')
                 if is_finish:
                     # 删除chunk文件
                     # 删除压缩文件
                     clean = utils.clean_files(remote_file_name)
-                    print(f'clean file is : {clean}')
                     utils.upload_done(remote_file_name)
+                    print(f'{utils.now2()} : 文件:{remote_file_name} 解压传输完成，完成时间{utils.now2()}...')
 
 
             except Exception as e:

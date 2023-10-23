@@ -4,7 +4,7 @@ import zipfile
 import os
 import requests
 import yaml
-from datetime import datetime
+from datetime import datetime, time
 
 
 # 合并文件
@@ -234,3 +234,23 @@ def upload_done(file_name):
     params = {'file_name': file_name}
     requests.get(url=url, data=params)
     return
+
+
+# 判断当前时间段是否可用
+def can_use():
+    config = conf()
+    start_time = time(config['start'], 0, 0)  # 9:00 AM
+    end_time = time(config['end'], 0, 0)  # 5:00 PM
+
+    # 获取当前时间
+    now = datetime.now().time()
+
+    # 检查当前时间是否在指定的时间段内
+    if start_time <= now <= end_time:
+        return False
+    else:
+        return True
+
+
+def now2() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
