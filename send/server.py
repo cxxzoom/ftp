@@ -13,9 +13,10 @@ def ready():
     args = request.get_json()
     file_name = args['file_name']
 
+    print(f'{utils.now2()} : 接收到准备文件 : {file_name} 的请求 ...')
     conf = utils.config()
     source_dir = os.path.join(conf['source_dir'], file_name)
-    print(source_dir)
+
     if not os.path.exists(source_dir):
         return jsonify({'code': -1, 'msg': f'{file_name} 不存在', 'res': {}})
 
@@ -32,7 +33,6 @@ def ready():
 # 发送文件：所有文件，包括当前文件和总的文件
 @app.route('/send', methods=['POST'])
 def send():
-    print('in send ...')
     # 参数获取
     args = request.get_json()
     file_name = f"{args['file_name']}"
@@ -46,26 +46,27 @@ def send():
     file_path = os.path.join(conf['zip_split_dir'], file_name, '', f"{current_id}.zip")
     files = {'file': open(file_path, 'rb')}
     url = f'http://{conf["remote"]}/upload'
-    print('in upload ...')
+    print(f'{utils.now2()} : 正在传输文件 : {file_name}...')
     response = requests.post(url=url, data={'file_name': file_name}, files=files)
-    print(f'upload response:{response.json()}')
     return jsonify({'code': 0, 'msg': 'success', 'res': {}})
 
 
 # 现在使用多线程传
 @app.route('/send2', methods=['POST'])
 def send2():
-    print('in send2 ...')
     # 参数获取
     args = request.get_json()
     file_name = f"{args['file_name']}"
     # 从这里开始就是扫描文件了
+    print(f'{utils.now2()} : 正在多线程传输文件 : {file_name}...')
+
     utils.thread_upload(file_name)
     return jsonify({'code': 0, 'msg': 'tread uploading', 'res': {}})
 
 
 @app.route('/maps', methods=['GET'])
 def mapping():
+    print(f'{utils.now2()} : 正在扫描资源文件 :...')
     conf = utils.config()
     source_dir = os.path.join(conf["source_dir"])
     maps = utils.scan2(source_dir)
@@ -77,6 +78,7 @@ def chunk_count():
     args = request.get_json()
     file_name = f"{args['file_name']}"
     conf = utils.config()
+    print(f'{utils.now2()} : 正在获取资源文件:{file_name} 切片个数...')
 
     chunk_dir = os.path.join(conf['zip_split_dir'], file_name, '')
     if os.path.exists(chunk_dir):

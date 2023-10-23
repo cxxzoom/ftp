@@ -3,6 +3,7 @@ import os
 import sys
 import zipfile
 from concurrent import futures
+from datetime import datetime
 
 import requests
 import yaml
@@ -120,6 +121,10 @@ def thread_upload(file_name):
     #     threading.Thread(target=upload2, args=(file, file_name, remote)).start()
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = executor.map(upload2, tmp_list,[file_name] * len(tmp_list), [remote] * len(tmp_list))
+        results = executor.map(upload2, tmp_list, [file_name] * len(tmp_list), [remote] * len(tmp_list))
         for result in results:
             print(result)
+
+
+def now2() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
