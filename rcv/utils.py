@@ -66,15 +66,18 @@ def conf():
 
 # 获取远程需要传输的文件列表
 def get_mapping():
-    config = conf()
-    response = requests.get(f'http://{config["remote"]}/maps')
-    code, msg, res = response.json()['code'], response.json()['msg'], response.json()['res']
-    if code == 0:
-        # print(res)
-        with open('maps.json', 'w') as file:
-            json.dump(res, file)
+    try:
+        config = conf()
+        response = requests.get(f'http://{config["remote"]}/maps')
+        code, msg, res = response.json()['code'], response.json()['msg'], response.json()['res']
+        if code == 0:
+            # print(res)
+            with open('maps.json', 'w') as file:
+                json.dump(res, file)
 
-    return res
+        return res
+    except Exception as e:
+        return {}
 
 
 # 考虑这里是不是需要

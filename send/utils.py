@@ -100,16 +100,13 @@ def dd(var):
 def upload2(file_path, file_name, remote):
     files = {'file': open(file_path, 'rb')}
     url = f'http://{remote}/upload'
-    print('in upload ...')
     response = requests.post(url=url, data={'file_name': file_name}, files=files)
-    print(response.json(), flush=True)
 
 
 # 这里写个线程池来管理上传
 def thread_upload(file_name):
     conf = config()
     chunk_path = os.path.join(conf['zip_split_dir'], file_name, '')
-    print(f'chunk_path:{chunk_path}')
     remote = conf['remote']
     # 遍历这下面的文件总数
     chunks = os.listdir(chunk_path)
@@ -120,10 +117,11 @@ def thread_upload(file_name):
     # for file in tmp_list:
     #     threading.Thread(target=upload2, args=(file, file_name, remote)).start()
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         results = executor.map(upload2, tmp_list, [file_name] * len(tmp_list), [remote] * len(tmp_list))
         for result in results:
-            print(result)
+            # print(result)
+            pass
 
 
 def now2() -> str:

@@ -21,6 +21,11 @@ def main():
         conf = utils.conf()
 
         maps = utils.get_mapping()
+        if not maps:
+            print(f'{utils.now2()} : 我估计远程挂掉了，sleep 一会儿再说')
+            time.sleep(conf['err_sleep'])
+            print('sleep 结束')
+            continue
 
         for remote_file_name in maps.keys():
 
